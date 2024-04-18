@@ -35,19 +35,24 @@ namespace ClassLibrary1
                 .GetMappedPublicPort(5432).ToString();
 
             var user = new BackOfficeUser();
-            var bocontainer = new BackOfficeModelContainer(pgPort);
-            bocontainer.Database.EnsureCreated();
-            bocontainer.BackOfficeUsers.Add(user);
-            bocontainer.SaveChanges();
+            using (var bocontainer = new BackOfficeModelContainer(pgPort))
+            {
+                bocontainer.Database.EnsureCreated();
+                bocontainer.BackOfficeUsers.Add(user);
+                bocontainer.SaveChanges();
+            }
+
             Stopwatch stopwatch = Stopwatch.StartNew();
             Parallel.For(0, 100, (i) =>
             {
-                for (int j = 0; j < 10; j++)
+                //for (int j = 0; j < 10; j++)
                 {
-                    var bocontainer = new BackOfficeModelContainer(pgPort);
-                    var tempuser = bocontainer.BackOfficeUsers.First();
-                    tempuser.LastCompany = Guid.NewGuid();
-                    bocontainer.BulkUpdate(new List<BackOfficeUser>() { tempuser });
+                    using (var bocontainer = new BackOfficeModelContainer(pgPort))
+                    {
+                        var tempuser = bocontainer.BackOfficeUsers.First();
+                        tempuser.LastCompany = Guid.NewGuid();
+                        bocontainer.BulkUpdate(new List<BackOfficeUser>() { tempuser });
+                    }
                 }
             });
             stopwatch.Stop();
